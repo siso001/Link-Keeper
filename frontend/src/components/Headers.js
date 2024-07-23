@@ -46,6 +46,7 @@ import { useNavigate } from "react-router-dom";
 
 const AuthContext = React.createContext();
 
+
 export const AuthProvider = ({ children }) => {
     const [loggedIn, setLoggedIn] = useState(false);
     const [username, setUsername] = useState('');
@@ -73,7 +74,7 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-const Header = ({ onSignupOpen, onLoginOpen }) => {
+const Header = ({ onSignupOpen, onLoginOpen, onAddfolderOpen }) => {
     const { loggedIn, username } = useContext(AuthContext);
 
     return (
@@ -107,8 +108,8 @@ const Header = ({ onSignupOpen, onLoginOpen }) => {
                                         追加する
                                     </MenuButton>
                                     <MenuList>
-                                        <MenuItem color={"blackAlpha.700"}>フォルダを追加する</MenuItem>
-                                        <MenuItem color={"blackAlpha.700"}>URLを追加する</MenuItem>
+                                        <MenuItem color={"blackAlpha.700"} onClick={onAddfolderOpen}>フォルダを追加する</MenuItem>
+                                        <MenuItem color={"blackAlpha.700"} onClick={onAddfolderOpen}>URLを追加する</MenuItem>
                                     </MenuList>
                                 </Menu>
                             </Flex>
@@ -293,15 +294,110 @@ const LogIn = ({ isOpen, onClose }) => {
     )
 }
 
+
+const AddFolder = ({ isOpen, onClose }) => {
+    const [foldername, setFolderName] = useState('');
+
+    const [error, setError] = useState(null);
+    const [alert, setAlert] = useState(null);
+
+    const [username, setUsername] = useState('');
+
+
+    useEffect(() => {
+        checkLogin();
+    }, []);
+
+    const checkLogin = async () => {
+        try {
+            const response = await Axios.get('http://127.0.0.1:5000/check_login', { withCredentials: true });
+            console.log('Login check response:', response.data);
+            setUsername(response.data.username);
+        } catch (error) {
+            console.error("Error checking login status", error);
+            setUsername('');
+        }
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        try {
+            const folderData = {
+                foldername: foldername,
+                username: username,
+            };
+            
+            const response = await Axios.post('http://127.0.0.1:5000/add_folder', folderData, { withCredentials: true });
+            setAlert(response.data.message);
+            setUsername(response.data.username);
+            onClose();
+        } catch (error) {
+            console.error('There was an error!', error);
+            setError('Error registering user');
+            onClose();
+        }
+    };
+
+    return (
+        <>  
+            <Modal isOpen={isOpen} onClose={onClose} className="modal" isCentered>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader fontWeight="bold">Add Folder</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <FormControl isRequired>
+                            <FormLabel>Folder Name</FormLabel>
+                            <Input 
+                                type='text' 
+                                placeholder='Folder name' 
+                                margin="0 0 10px 0" 
+                                value={foldername} 
+                                onChange={(e) => setFolderName(e.target.value)} 
+                            />
+                        </FormControl>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button type='submit' colorScheme='blue' mr={3} onClick={handleSubmit}>
+                            Save
+                        </Button>
+                        <Button variant='ghost' onClick={onClose}>Cancel</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+            {error && (
+                <Box position="fixed" bottom="0" width="100%">
+                    <Alert status='error'>
+                        <AlertIcon />
+                        {error}
+                    </Alert>
+                </Box>
+            )}
+            {alert && (
+                <Box position="fixed" bottom="0" width="100%"> 
+                    <Alert status='success'>
+                        <AlertIcon />
+                        {alert}
+                    </Alert>
+                </Box>
+            )}
+
+        </>
+    )
+}
+
+
 function Headers() {
     // 共通の親コンポーネントに持ち上げる
     const { isOpen: isSignUpOpen, onOpen: onSignupOpen, onClose: onSignUpClose } = useDisclosure();
     const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure();
+    const { isOpen: isAddfolderOpen, onOpen: onAddfolderOpen, onClose: onAddfolderClose } = useDisclosure();
     return (
         <AuthProvider>
-            <Header onSignupOpen={onSignupOpen} onLoginOpen={onLoginOpen} />
+            <Header onSignupOpen={onSignupOpen} onLoginOpen={onLoginOpen} onAddfolderOpen={onAddfolderOpen} />
             <SignUp isOpen={isSignUpOpen} onClose={onSignUpClose} />
             <LogIn isOpen={isLoginOpen} onClose={onLoginClose} />
+            <AddFolder isOpen={isAddfolderOpen} onClose={onAddfolderClose} />
         </AuthProvider>
     );
 }

@@ -65,7 +65,7 @@ def logout():
     logout_user()  
     return "Log out page"
 
-
+# ログインを確認
 @app.route('/check_login', methods=['GET'])
 def check_login():
     if current_user.is_authenticated:
@@ -75,3 +75,42 @@ def check_login():
         print("loginしていません")
         print(f"現在のユーザー: {current_user}")
         return jsonify({'logged_in': False})
+
+# ユーザーのフォルダを取得
+@app.route('/check_folder', methods=['GET'])
+def check_folder():
+    from model import Folder, User
+    user = User.query.filter_by(username=current_user.username).first()
+    folders = Folder.query.filter_by(user_id=user.user_id).all()
+    folder_list = [{"id": folder.folder_id, "name": folder.folder_name} for folder in folders]     
+    if current_user.is_authenticated:
+        return jsonify(folder_list)
+    else:
+        print("loginしていません")
+        print(f"現在のユーザー: {current_user}")
+        return jsonify({'logged_in': False})
+    
+# フォルダ内のUrlのデータを取得
+@app.route('/get_urls', methods=['post'])
+def get_urls():
+    from model import Url
+    data = request.json
+    folder_id = data.get('folder_id')
+    urls = Url.query.filter_by(folder_id=folder_id).all()
+    url_list = [{"id": url.url_id, "name": url.url_name, "url": url.url, "domain": url.domain} for url in urls]     
+    return jsonify(url_list)
+
+# フォルダを追加
+@app.route('/add_folder', methods=['POST'])
+def add_folder():
+    from model import Folder, User
+    data = request.json
+    foldername = data.get('foldername')
+    username = data.get('username')
+    user = User.query.filter_by(username=username).first()
+    if not username or not foldername:
+        return jsonify({'error': 'Missing data'}), 400
+    new_folder = Folder(folder_name=foldername, user_id=user.user_id, folder_color_id=1)
+    db.session.add(new_folder)
+    db.session.commit()
+    return jsonify({'message': 'フォルダの追加に成功しました！'}), 201
