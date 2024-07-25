@@ -39,6 +39,7 @@ import {
     MenuGroup,
     MenuOptionGroup,
     MenuDivider,
+    Select,
 } from '@chakra-ui/react';
 import React, { useState, useEffect, useContext } from 'react';
 import Axios from 'axios';
@@ -68,13 +69,13 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ loggedIn, setLoggedIn, username, setUsername, checkLogin }}>
+        <AuthContext.Provider value={{ loggedIn, setLoggedIn, username, setUsername, checkLogin}}>
             {children}
         </AuthContext.Provider>
     );
 };
 
-const Header = ({ onSignupOpen, onLoginOpen, onAddfolderOpen }) => {
+const Header = ({ onSignupOpen, onLoginOpen, onAddfolderOpen, onAddurlOpen }) => {
     const { loggedIn, username } = useContext(AuthContext);
 
     return (
@@ -109,7 +110,7 @@ const Header = ({ onSignupOpen, onLoginOpen, onAddfolderOpen }) => {
                                     </MenuButton>
                                     <MenuList>
                                         <MenuItem color={"blackAlpha.700"} onClick={onAddfolderOpen}>フォルダを追加する</MenuItem>
-                                        <MenuItem color={"blackAlpha.700"} onClick={onAddfolderOpen}>URLを追加する</MenuItem>
+                                        <MenuItem color={"blackAlpha.700"} onClick={onAddurlOpen}>URLを追加する</MenuItem>
                                     </MenuList>
                                 </Menu>
                             </Flex>
@@ -359,7 +360,7 @@ const AddFolder = ({ isOpen, onClose }) => {
                     </ModalBody>
                     <ModalFooter>
                         <Button type='submit' colorScheme='blue' mr={3} onClick={handleSubmit}>
-                            Save
+                            Add
                         </Button>
                         <Button variant='ghost' onClick={onClose}>Cancel</Button>
                     </ModalFooter>
@@ -386,18 +387,154 @@ const AddFolder = ({ isOpen, onClose }) => {
     )
 }
 
+const Addurl = ({ isOpen, onClose }) => {
+    const [urlname, setUrlName] = useState('');
+    const [link, setlink] = useState('');
+
+    const [error, setError] = useState(null);
+    const [alert, setAlert] = useState(null);
+
+    const [username, setUsername] = useState('');
+    const [folderid, setFolderid] = useState('');
+
+
+
+    useEffect(() => {
+        checkLogin();
+    }, []);
+
+    const checkLogin = async () => {
+        try {
+            const response = await Axios.get('http://127.0.0.1:5000/check_login', { withCredentials: true });
+            console.log('Login check response:', response.data);
+            setUsername(response.data.username);
+        } catch (error) {
+            console.error("Error checking login status", error);
+            setUsername('');
+        }
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        try {
+            const folderData = {
+                urlname: urlname,
+                link: link,
+                username: username,
+                folderid: folderid,
+            };
+            
+            const response = await Axios.post('http://127.0.0.1:5000/add_url', folderData, { withCredentials: true });
+            setAlert(response.data.message);
+            setUsername(response.data.username);
+            onClose();
+        } catch (error) {
+            console.error('There was an error!', error);
+            setError('Error registering user');
+            onClose();
+        }
+    };
+
+    const [Folders, setFolders] = useState([]);
+
+    const checkFolder = async () => {
+        try {
+            const response = await Axios.get('http://127.0.0.1:5000/check_folder', { withCredentials: true });
+            setFolders(response.data);
+        } catch (error) {
+            console.error("Error checking login status", error);
+            setFolders(['']);
+        }
+    };
+
+    useEffect(() => {
+        checkFolder();
+    }, []);
+
+    
+
+    return (
+        <>  
+            <Modal isOpen={isOpen} onClose={onClose} className="modal" isCentered>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader fontWeight="bold">Add Url</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <FormControl isRequired>
+                            <FormLabel>Url Name</FormLabel>
+                            <Input 
+                                type='text' 
+                                placeholder='Folder name' 
+                                margin="0 0 10px 0" 
+                                value={urlname} 
+                                onChange={(e) => setUrlName(e.target.value)} 
+                            />
+                            <FormLabel>Link</FormLabel>
+                            <Input 
+                                type='text' 
+                                placeholder='Link' 
+                                margin="0 0 10px 0" 
+                                value={link} 
+                                onChange={(e) => setlink(e.target.value)} 
+                            />
+                            <FormLabel>フォルダに追加</FormLabel>
+                            <Select
+                                placeholder='フォルダに追加しない'
+                                color="gray.600"
+                                onChange={(e) => setFolderid(e.target.value)}
+                            >
+                                {Folders.map(item => (
+                                <option value={item.id} key={item.id}>{item.name}</option>            
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button type='submit' colorScheme='blue' mr={3} onClick={handleSubmit}>
+                            Add
+                        </Button>
+                        <Button variant='ghost' onClick={onClose}>Cancel</Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+            {error && (
+                <Box position="fixed" bottom="0" width="100%">
+                    <Alert status='error'>
+                        <AlertIcon />
+                        {error}
+                    </Alert>
+                </Box>
+            )}
+            {alert && (
+                <Box position="fixed" bottom="0" width="100%"> 
+                    <Alert status='success'>
+                        <AlertIcon />
+                        {alert}
+                    </Alert>
+                </Box>
+            )}
+
+        </>
+    )
+}
 
 function Headers() {
     // 共通の親コンポーネントに持ち上げる
     const { isOpen: isSignUpOpen, onOpen: onSignupOpen, onClose: onSignUpClose } = useDisclosure();
     const { isOpen: isLoginOpen, onOpen: onLoginOpen, onClose: onLoginClose } = useDisclosure();
     const { isOpen: isAddfolderOpen, onOpen: onAddfolderOpen, onClose: onAddfolderClose } = useDisclosure();
+    const { isOpen: isAddurlOpen, onOpen: onAddurlOpen, onClose: onAddurlClose } = useDisclosure();
+
+
     return (
         <AuthProvider>
-            <Header onSignupOpen={onSignupOpen} onLoginOpen={onLoginOpen} onAddfolderOpen={onAddfolderOpen} />
+            <Header onSignupOpen={onSignupOpen} onLoginOpen={onLoginOpen} onAddfolderOpen={onAddfolderOpen} onAddurlOpen={onAddurlOpen} />
             <SignUp isOpen={isSignUpOpen} onClose={onSignUpClose} />
             <LogIn isOpen={isLoginOpen} onClose={onLoginClose} />
             <AddFolder isOpen={isAddfolderOpen} onClose={onAddfolderClose} />
+            <Addurl isOpen={isAddurlOpen} onClose={onAddurlClose} />
+
         </AuthProvider>
     );
 }

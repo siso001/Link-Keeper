@@ -1,5 +1,5 @@
 from __init__ import request, app, db, login_manager, jsonify, login_user, logout_user, current_user, login_required, session
-
+from urllib.parse import urlparse
 
 # ログイン状態を管理
 @login_manager.user_loader
@@ -112,5 +112,25 @@ def add_folder():
         return jsonify({'error': 'Missing data'}), 400
     new_folder = Folder(folder_name=foldername, user_id=user.user_id, folder_color_id=1)
     db.session.add(new_folder)
+    db.session.commit()
+    return jsonify({'message': 'フォルダの追加に成功しました！'}), 201
+
+# Urlを追加
+@app.route('/add_url', methods=['POST'])
+def add_url():
+    from model import Url, User, Folder
+    data = request.json
+    urlname = data.get('urlname')
+    url = data.get('link')
+
+    folder_id = data.get('folderid')
+    username = data.get('username')
+    user = User.query.filter_by(username=username).first()
+    domain = urlparse(url).netloc.replace('www.', '')
+    
+    if not username or not url:
+        return jsonify({'error': 'Missing data'}), 400
+    new_url = Url(user_id=user.user_id, url=url, url_name=urlname, domain=domain, folder_id=folder_id)
+    db.session.add(new_url)
     db.session.commit()
     return jsonify({'message': 'フォルダの追加に成功しました！'}), 201
