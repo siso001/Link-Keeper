@@ -80,8 +80,8 @@ const Header = ({ onSignupOpen, onLoginOpen, onAddfolderOpen, onAddurlOpen }) =>
 
     return (
         <Box bg="white" maxW="100%" boxShadow="sm" zIndex="10" position="relative">
-            <Box px={200}>
-                <Flex as="header" py="4" justifyContent="space-between" alignItems="center">
+            <Box px={180}>
+                <Flex as="header" py="3" justifyContent="space-between" alignItems="center">
                     <Box p='0'>
                         <Heading href='http://127.0.0.1:3000/' as='a' fontSize="2xl" cursor="pointer">
                             Link Keeper
@@ -90,7 +90,7 @@ const Header = ({ onSignupOpen, onLoginOpen, onAddfolderOpen, onAddurlOpen }) =>
                     <Spacer />
                     {loggedIn ? (
                         <Box>
-                            <Flex alignItems='center' gap='4'>
+                            <Flex alignItems='center' gap='3'>
                                 <Text>{username}</Text>
                                 <Menu>
                                     <MenuButton>
@@ -104,8 +104,9 @@ const Header = ({ onSignupOpen, onLoginOpen, onAddfolderOpen, onAddurlOpen }) =>
                                         </MenuGroup>
                                     </MenuList>
                                 </Menu>
+                                <Box></Box>
                                 <Menu>
-                                    <MenuButton colorScheme='blue' as={Button} size='md'>
+                                    <MenuButton colorScheme='blue' as={Button} size='md' h="36px" fontSize="15px" fontWeight="bold" padding="13px 16px 14px 16px" borderRadius="18px">
                                         追加する
                                     </MenuButton>
                                     <MenuList>
