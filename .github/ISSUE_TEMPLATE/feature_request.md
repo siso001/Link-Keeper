@@ -2,7 +2,7 @@
 name: 要望
 about: ✨要望する為のテンプレート
 title: ''
-labels: Priority: 🔥 High
+labels: bug
 assignees: ''
 
 ---
