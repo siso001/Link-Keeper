@@ -1,5 +1,5 @@
 ---
-name: 要望
+name: 要望用テンプレート
 about: ✨要望する為のテンプレート
 title: ''
 labels: bug
